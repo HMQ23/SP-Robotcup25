@@ -73,6 +73,7 @@ controller Controller = controller();
 
 motor ratchetMotor7 = motor(PORT7, false);
 motor ratchetMotor8 = motor(PORT8, true);
+motor_group ratchetMotorGroup = motor_group(ratchetMotor7, ratchetMotor8);
 
 motor leftDriveMotor = motor(PORT1, false);
 motor rightDriveMotor = motor(PORT2, true);
@@ -87,11 +88,8 @@ int main() {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
 
-
-  ratchetMotor7.setMaxTorque(100.0, percent);
-  ratchetMotor7.setVelocity(100.0, percent);
-  ratchetMotor8.setMaxTorque(100.0, percent);
-  ratchetMotor8.setVelocity(100.0, percent);
+  ratchetMotorGroup.setMaxTorque(100.0, percent);
+  // ratchetMotorGroup.setVelocity(100.0, percent);
 
   
   float leftPos;
@@ -104,9 +102,21 @@ int main() {
 
   leftDriveMotor.spin(forward);
   rightDriveMotor.spin(forward);
+  
 
-  // Controller.ButtonRUp.pressed(ratchetDriveForward);
-  // Controller.ButtonRDown.pressed(ratchetDriveBackward);
+  if (Controller.ButtonRUp.pressing()) {
+    ratchetMotorGroup.setVelocity(100.0, percent);
+  }
+  else {
+    ratchetMotorGroup.setVelocity(0.0, percent);
+  }
+
+  if (Controller.ButtonRDown.pressing()) {
+    ratchetMotorGroup.setVelocity(-100.0, percent);
+  }
+  else {
+    ratchetMotorGroup.setVelocity(0.0, percent);
+  }
 
   wait(20, msec);
 }
