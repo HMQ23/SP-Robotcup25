@@ -1,0 +1,18 @@
+{
+	"project": {
+		"name": "main",
+		"slot": 1,
+		"description": "",
+		"platform": "IQ2",
+		"creationDate": "Wed, 27 Aug 2025 12:38:25 GMT",
+		"language": "cpp",
+		"sdkVersion": "IQ2_20231003_10_00_00",
+		"cpp": {
+			"includePath": []
+		}
+	},
+	"extension": {
+		"version": "0.7.2025041600",
+		"json": 1
+	}
+}

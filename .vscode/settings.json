@@ -1,0 +1,5 @@
+{
+	"C_Cpp.default.systemIncludePath": [
+		"${config:vexrobotics.vexcode.Cpp.Sdk.Home}\\IQ2\\IQ2_20231003_10_00_00\\vexiq2\\gcc\\include\\sys"
+	]
+}
