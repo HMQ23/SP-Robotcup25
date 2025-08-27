@@ -78,10 +78,24 @@ motor_group ratchetMotorGroup = motor_group(ratchetMotor7, ratchetMotor8);
 motor leftDriveMotor = motor(PORT1, false);
 motor rightDriveMotor = motor(PORT2, true);
 
+// const float Kp = 20;
+// const int MAX_SPEED = 100;
+// const int MIN_SPEED = 0;
+
+
 
 // Allows for easier use of the VEX Library
 using namespace vex;
 
+
+// float PDrive(float Kp, float targetSpeed) {
+//   float PGain = Kp * targetSpeed;
+  
+//   if PGAin >
+//   float output = max(min(PGain, MAX_SPEED), -MAX_SPEED);
+  
+//   return output;
+// }
 
 
 int main() {
@@ -94,15 +108,15 @@ int main() {
   
   float leftPos;
   float rightPos;
-  leftPos = Controller.AxisA.position() - Controller.AxisC.position();
-  rightPos = Controller.AxisA.position() + Controller.AxisC.position();
+  leftPos = Controller.AxisA.position() + Controller.AxisC.position();
+  rightPos = Controller.AxisA.position() - Controller.AxisC.position();
 
   leftDriveMotor.setVelocity(leftPos, percent);
   rightDriveMotor.setVelocity(rightPos, percent);
 
   leftDriveMotor.spin(forward);
   rightDriveMotor.spin(forward);
-  
+
 
   if (Controller.ButtonRUp.pressing()) {
     ratchetMotorGroup.setVelocity(100.0, percent);
