@@ -13,7 +13,7 @@ using namespace vex;
 
 // Brain should be defined by default
 brain Brain;
-
+inertial BrainInertial = inertial();
 
 // START IQ MACROS
 #define waitUntil(condition)                                                   \
@@ -57,7 +57,6 @@ void calibrateDrivetrain() {
 
 void vexcodeInit() {
 
-  // Calibrate the Drivetrain
   calibrateDrivetrain();
 
   // Initializing random seed.
@@ -66,71 +65,116 @@ void vexcodeInit() {
 
 #pragma endregion VEXcode Generated Robot Configuration
 
+//base motor
+motor leftFront = motor(PORT5, false);
+motor leftBack = motor(PORT6, false);
+motor rightFront = motor(PORT2, true);
+motor rightBack = motor(PORT1, true);
+motor_group leftDriveMotor = motor_group(leftFront, leftBack);
+motor_group rightDriveMotor = motor_group(rightFront, rightBack);
 
-// Robot configuration code.
-inertial BrainInertial = inertial();
-controller Controller = controller();
+// motor leftDriveMotor = motor(PORT1, true);
+// motor rightDriveMotor = motor(PORT7, false);
 
-motor ratchetMotor7 = motor(PORT7, false);
-motor ratchetMotor8 = motor(PORT8, true);
-motor_group ratchetMotorGroup = motor_group(ratchetMotor7, ratchetMotor8);
+drivetrain Drivetrain = drivetrain(leftDriveMotor, rightDriveMotor);
 
-motor leftDriveMotor = motor(PORT1, false);
-motor rightDriveMotor = motor(PORT2, true);
-
-// const float Kp = 20;
-// const int MAX_SPEED = 100;
-// const int MIN_SPEED = 0;
-
+// roller motor
+motor roller = motor(PORT3, true);
 
 
 // Allows for easier use of the VEX Library
 using namespace vex;
 
+void PDrive(float Kp, float target, float distance, float speed) {
+  float distanceMoved = 0;
 
-// float PDrive(float Kp, float targetSpeed) {
-//   float PGain = Kp * targetSpeed;
-  
-//   if PGAin >
-//   float output = max(min(PGain, MAX_SPEED), -MAX_SPEED);
-  
-//   return output;
-// }
+  while (distanceMoved < distance)
+  {
+    leftDriveMotor.setPosition(0, turns);
+    rightDriveMotor.setPosition(0, turns);
 
+    float error = target - BrainInertial.rotation(degrees);
+    float P = Kp * error;
+
+    leftDriveMotor.setVelocity(speed + P, percent);
+    rightDriveMotor.setVelocity(speed - P, percent);
+    leftDriveMotor.spin(forward);
+    rightDriveMotor.spin(forward);
+
+    wait(20, msec);
+
+    distanceMoved += (leftDriveMotor.position(turns) * 200 + rightDriveMotor.position(turns) * 200) / 2;
+  }
+
+  leftDriveMotor.stop();
+  rightDriveMotor.stop();
+}
+
+void PRotate(float Kp, float target, float speed) {
+  while (BrainInertial.rotation(degrees) != target-1)
+  {
+    // leftDriveMotor.setPosition(0, turns);
+    // rightDriveMotor.setPosition(0, turns);
+
+    if (target < 180) {
+      float error = BrainInertial.rotation(degrees) - (target - 360);
+      float P = Kp * error;
+
+      leftDriveMotor.setVelocity(-P, percent);
+      rightDriveMotor.setVelocity(P, percent);
+      leftDriveMotor.spin(forward);
+      rightDriveMotor.spin(forward);
+    }
+    if (target < 180) {
+      float error = target - BrainInertial.rotation(degrees);
+      float P = Kp * error;
+
+      leftDriveMotor.setVelocity(P, percent);
+      rightDriveMotor.setVelocity(-P, percent);
+      leftDriveMotor.spin(forward);
+      rightDriveMotor.spin(forward);
+    }
+
+    wait(20, msec);
+  }
+
+  leftDriveMotor.stop();
+  rightDriveMotor.stop();
+}
+
+
+const int MAX_SPEED = 100;
+const int MIN_SPEED = 10;
+const float Kp_DRIVE = 2;
+const float Kp_ROTATE = 2;
+
+void Path() {
+
+  // roller.setMaxTorque(100, percent);
+  // roller.setVelocity(100, percent);
+  // roller.spin(forward);
+
+
+  // PDrive(Kp_DRIVE, 0, 2500, MAX_SPEED);
+  PRotate(Kp_ROTATE, 270, MAX_SPEED);
+  PDrive(Kp_DRIVE, -90, 2600, MAX_SPEED);
+
+  // PRotate(Kp_ROTATE, 0, MAX_SPEED);
+  // PDrive(Kp_DRIVE, 0, 200, MAX_SPEED);
+
+  // PRotate(Kp_ROTATE, 180, MAX_SPEED);
+  // PDrive(Kp_DRIVE, 180, 500, MAX_SPEED);
+
+  // roller.setMaxTorque(100, percent);
+  // roller.setVelocity(-100, percent);
+  // roller.spin(forward);
+
+  // PDrive(Kp_DRIVE, 180, 1000, MAX_SPEED);
+}
 
 int main() {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
 
-  ratchetMotorGroup.setMaxTorque(100.0, percent);
-  // ratchetMotorGroup.setVelocity(100.0, percent);
-
-  
-  float leftPos;
-  float rightPos;
-  leftPos = Controller.AxisA.position() + Controller.AxisC.position();
-  rightPos = Controller.AxisA.position() - Controller.AxisC.position();
-
-  leftDriveMotor.setVelocity(leftPos, percent);
-  rightDriveMotor.setVelocity(rightPos, percent);
-
-  leftDriveMotor.spin(forward);
-  rightDriveMotor.spin(forward);
-
-
-  if (Controller.ButtonRUp.pressing()) {
-    ratchetMotorGroup.setVelocity(100.0, percent);
-  }
-  else {
-    ratchetMotorGroup.setVelocity(0.0, percent);
-  }
-
-  if (Controller.ButtonRDown.pressing()) {
-    ratchetMotorGroup.setVelocity(-100.0, percent);
-  }
-  else {
-    ratchetMotorGroup.setVelocity(0.0, percent);
-  }
-
-  wait(20, msec);
+  Path();
 }
