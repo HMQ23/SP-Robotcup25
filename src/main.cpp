@@ -90,11 +90,32 @@ const int MIN_SPEED = 10;     // Minimum motor speed to overcome friction
 const float Kp_DRIVE = 2;     // Proportional gain for driving straight
 const float Kp_ROTATE = 2;    // Proportional gain for rotating
 
+const float MaxCount = 25;
+float count = 0;
+
 
 // Allows for easier use of the VEX Library
 using namespace vex;
 
 // ========== PROPORTIONAL DRIVE FUNCTION ==========
+
+//Check if robot can still move
+float Dist = 0;
+void LaternalCheck() {
+  float PrevDist = 0;
+  while(true) {    
+    wait(0.1, seconds);
+    //Compare the difference between the last measured distance and this one, if it is too small, the robot is most likely stuck or have hit a wall
+    if(abs(PrevDist - Dist) < 0.1) {
+      count += 1;
+    }
+    else {
+      count = 0;
+    }
+    PrevDist = Dist;
+  }
+}
+
 /**
  * Drives the robot straight for a specified distance while maintaining heading
  * Kp - Proportional gain constant (higher = stronger corrections)
@@ -124,7 +145,7 @@ void PDrive(float Kp, float target, float distance, float speed) {
     leftDriveMotor.spin(forward);
     rightDriveMotor.spin(forward);
 
-    wait(20, msec);
+     wait(0.1, seconds);
 
     // Calculate distance moved in this iteration and add to total
     // Formula: average number of turns of left and right * wheel circumference
@@ -138,6 +159,44 @@ void PDrive(float Kp, float target, float distance, float speed) {
   rightDriveMotor.stop();
 }
 
+void PDrive(float Kp, float target, float speed) {
+  float distanceMoved = 0; // Track how far we've traveled
+  count = 0;
+  thread Check = thread(LaternalCheck);
+  // Continue driving until we reach the target distance
+  while (count < MaxCount) {
+    leftDriveMotor.setPosition(0, turns);
+    rightDriveMotor.setPosition(0, turns);
+
+    // Calculate heading error: difference between target and current heading
+    float error = target - BrainInertial.rotation(degrees);
+    // Calculate proportional correction value
+    float P = Kp * error;
+
+    // Apply correction to motor speeds:
+    // - Left motor: base speed + correction
+    // - Right motor: base speed - correction
+    // This causes the robot to turn toward the target heading
+    leftDriveMotor.setVelocity(speed + P, percent);
+    rightDriveMotor.setVelocity(speed - P, percent);
+    leftDriveMotor.spin(forward);
+    rightDriveMotor.spin(forward);
+
+    wait(0.1, seconds);
+
+    // Calculate distance moved in this iteration and add to total
+    // Formula: average number of turns of left and right * wheel circumference
+    distanceMoved += 
+      (leftDriveMotor.position(turns) * 200 + 
+       rightDriveMotor.position(turns) * 200) / 2;
+       
+    Dist = distanceMoved;
+  }
+
+  // Stop motors when target distance is reached
+  leftDriveMotor.stop();
+  rightDriveMotor.stop();
+}
 
 // ========== PROPORTIONAL ROTATE FUNCTION ==========
 /**
@@ -152,7 +211,7 @@ void PRotate(float Kp, float target, float speed) {
 
   // Continue rotating until within ±0.1 degrees of tolerance range of target
   while 
-    (!(targetRotation - BrainInertial.rotation(degrees) < 0.1 && targetRotation - BrainInertial.rotation(degrees) > -0.1)) {
+    (abs(targetRotation - BrainInertial.rotation(degrees)) > 0.1){
     // leftDriveMotor.setPosition(0, turns);
     // rightDriveMotor.setPosition(0, turns);
 
