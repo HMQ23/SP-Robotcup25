@@ -87,7 +87,7 @@ motor roller = motor(PORT3, true);        // Roller motor, reversed
 // ========== CONSTANTS FOR TUNING ==========
 const int MAX_SPEED = 100;    // Maximum motor speed percentage (0-100%)
 const int MIN_SPEED = 10;     // Minimum motor speed to overcome friction
-const float Kp_DRIVE = 2;     // Proportional gain for driving straight
+const float Kp_DRIVE = 10;     // Proportional gain for driving straight
 const float Kp_ROTATE = 2;    // Proportional gain for rotating
 
 const float MaxCount = 25;
@@ -211,7 +211,7 @@ void PRotate(float Kp, float target, float speed) {
 
   // Continue rotating until within ±0.1 degrees of tolerance range of target
   while 
-    (abs(targetRotation - BrainInertial.rotation(degrees)) > 0.1){
+    (abs(targetRotation - BrainInertial.rotation(degrees)) > 0.5){
     // leftDriveMotor.setPosition(0, turns);
     // rightDriveMotor.setPosition(0, turns);
 
@@ -242,22 +242,42 @@ void Path() {
   roller.setVelocity(100, percent);
   roller.spin(forward);
 
+  PDrive(Kp_DRIVE, 0, 2275, MAX_SPEED);
+  PRotate(Kp_ROTATE, -90, MAX_SPEED);
+  PDrive(Kp_DRIVE, -90, 1900, MAX_SPEED);
 
-  // PDrive(Kp_DRIVE, 0, 2500, MAX_SPEED);
-  PRotate(Kp_ROTATE, 270, MAX_SPEED);
-  PDrive(Kp_DRIVE, -90, 2600, MAX_SPEED);
+  PRotate(Kp_ROTATE, 45, MAX_SPEED);
+  PDrive(Kp_DRIVE, -45, 450, MAX_SPEED);
+  PRotate(Kp_ROTATE, -15, MAX_SPEED);
+  PDrive(Kp_DRIVE, -60, 300, MAX_SPEED);
+  // leftDriveMotor.setVelocity(100, percent);
+  // rightDriveMotor.setVelocity(100, percent);
+  // leftDriveMotor.spin(forward);
+  // rightDriveMotor.spin(forward);
+  // PRotate(Kp_ROTATE, -90, MAX_SPEED);
 
-  // PRotate(Kp_ROTATE, 0, MAX_SPEED);
-  // PDrive(Kp_DRIVE, 0, 200, MAX_SPEED);
+  // timer stopTimer;
+  // stopTimer.clear(); // Reset timer to 0
+  
+  // // Stop only the base motors
+  // leftDriveMotor.stop();
+  // rightDriveMotor.stop();
+  
+  // // Continue checking time without blocking other code
+  // while (stopTimer.time() < 10000) {
+  //     roller.setMaxTorque(100, percent);
+  //     roller.setVelocity(100, percent);
+  //     roller.spin(forward);
+  // }
 
-  // PRotate(Kp_ROTATE, 180, MAX_SPEED);
-  // PDrive(Kp_DRIVE, 180, 500, MAX_SPEED);
+  // // PRotate(Kp_ROTATE, 180, MAX_SPEED);
+  // PDrive(Kp_DRIVE, 180, 1500, MAX_SPEED);
 
   // roller.setMaxTorque(100, percent);
   // roller.setVelocity(-100, percent);
   // roller.spin(forward);
 
-  // PDrive(Kp_DRIVE, 180, 1000, MAX_SPEED);
+  // // PDrive(Kp_DRIVE, 180, 1000, MAX_SPEED);
 }
 
 int main() {
