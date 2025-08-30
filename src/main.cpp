@@ -65,37 +65,60 @@ void vexcodeInit() {
 
 #pragma endregion VEXcode Generated Robot Configuration
 
-//base motor
-motor leftFront = motor(PORT5, false);
-motor leftBack = motor(PORT6, false);
-motor rightFront = motor(PORT2, true);
-motor rightBack = motor(PORT1, true);
+
+// ========== HARDWARE CONFIGURATION ==========
+
+// Base motors - Configured as motor groups for left and right sides
+motor leftFront = motor(PORT5, false);    // Left front motor, not reversed
+motor leftBack = motor(PORT6, false);     // Left back motor, not reversed
+motor rightFront = motor(PORT2, true);    // Right front motor, reversed
+motor rightBack = motor(PORT1, true);     // Right back motor, reversed
+
+// Motor groups for easier control of left and right sides
+// Drivetrain object for built-in drive functions
 motor_group leftDriveMotor = motor_group(leftFront, leftBack);
 motor_group rightDriveMotor = motor_group(rightFront, rightBack);
-
-// motor leftDriveMotor = motor(PORT1, true);
-// motor rightDriveMotor = motor(PORT7, false);
-
 drivetrain Drivetrain = drivetrain(leftDriveMotor, rightDriveMotor);
 
-// roller motor
-motor roller = motor(PORT3, true);
+// Roller motor for intake or other mechanisms
+motor roller = motor(PORT3, true);        // Roller motor, reversed
+
+
+// ========== CONSTANTS FOR TUNING ==========
+const int MAX_SPEED = 100;    // Maximum motor speed percentage (0-100%)
+const int MIN_SPEED = 10;     // Minimum motor speed to overcome friction
+const float Kp_DRIVE = 2;     // Proportional gain for driving straight
+const float Kp_ROTATE = 2;    // Proportional gain for rotating
 
 
 // Allows for easier use of the VEX Library
 using namespace vex;
 
+// ========== PROPORTIONAL DRIVE FUNCTION ==========
+/**
+ * Drives the robot straight for a specified distance while maintaining heading
+ * Kp - Proportional gain constant (higher = stronger corrections)
+ * target - Desired heading angle in degrees to maintain
+ * distance - Total distance to travel (units based on wheel circumference)
+ * speed - Base driving speed percentage (0-100%)
+ */
 void PDrive(float Kp, float target, float distance, float speed) {
-  float distanceMoved = 0;
+  float distanceMoved = 0; // Track how far we've traveled
 
-  while (distanceMoved < distance)
-  {
+  // Continue driving until we reach the target distance
+  while (distanceMoved < distance) {
     leftDriveMotor.setPosition(0, turns);
     rightDriveMotor.setPosition(0, turns);
 
+    // Calculate heading error: difference between target and current heading
     float error = target - BrainInertial.rotation(degrees);
+    // Calculate proportional correction value
     float P = Kp * error;
 
+    // Apply correction to motor speeds:
+    // - Left motor: base speed + correction
+    // - Right motor: base speed - correction
+    // This causes the robot to turn toward the target heading
     leftDriveMotor.setVelocity(speed + P, percent);
     rightDriveMotor.setVelocity(speed - P, percent);
     leftDriveMotor.spin(forward);
@@ -103,56 +126,62 @@ void PDrive(float Kp, float target, float distance, float speed) {
 
     wait(20, msec);
 
-    distanceMoved += (leftDriveMotor.position(turns) * 200 + rightDriveMotor.position(turns) * 200) / 2;
+    // Calculate distance moved in this iteration and add to total
+    // Formula: average number of turns of left and right * wheel circumference
+    distanceMoved += 
+      (leftDriveMotor.position(turns) * 200 + 
+       rightDriveMotor.position(turns) * 200) / 2;
   }
 
+  // Stop motors when target distance is reached
   leftDriveMotor.stop();
   rightDriveMotor.stop();
 }
 
+
+// ========== PROPORTIONAL ROTATE FUNCTION ==========
+/**
+ * Rotates the robot to a specific target angle using proportional control
+ * Kp - Proportional gain constant for rotation
+ * target - Target angle to rotate to (relative to current position)
+ * speed - Maximum rotation speed percentage (0-100%)
+ */
 void PRotate(float Kp, float target, float speed) {
-  while (BrainInertial.rotation(degrees) != target-1)
-  {
+  // Calculate absolute target rotation (current angle + desired change)
+  float targetRotation = BrainInertial.rotation(degrees) + target;
+
+  // Continue rotating until within ±0.1 degrees of tolerance range of target
+  while 
+    (!(targetRotation - BrainInertial.rotation(degrees) < 0.1 && targetRotation - BrainInertial.rotation(degrees) > -0.1)) {
     // leftDriveMotor.setPosition(0, turns);
     // rightDriveMotor.setPosition(0, turns);
 
-    if (target < 180) {
-      float error = BrainInertial.rotation(degrees) - (target - 360);
-      float P = Kp * error;
+    // Calculate error: difference between target and current rotation
+    float error = targetRotation - BrainInertial.rotation(degrees);
+    // Calculate proportional correction value
+    float P = Kp * error;
 
-      leftDriveMotor.setVelocity(-P, percent);
-      rightDriveMotor.setVelocity(P, percent);
-      leftDriveMotor.spin(forward);
-      rightDriveMotor.spin(forward);
-    }
-    if (target < 180) {
-      float error = target - BrainInertial.rotation(degrees);
-      float P = Kp * error;
-
-      leftDriveMotor.setVelocity(P, percent);
-      rightDriveMotor.setVelocity(-P, percent);
-      leftDriveMotor.spin(forward);
-      rightDriveMotor.spin(forward);
-    }
+    // Set motors for rotation:
+    // - Positive target: spin clockwise
+    // - Negative target: spin anticlockwise
+    leftDriveMotor.setVelocity(P, percent);
+    rightDriveMotor.setVelocity(-P, percent);
+    leftDriveMotor.spin(forward);
+    rightDriveMotor.spin(forward);
 
     wait(20, msec);
   }
 
+  // Stop motors when target rotation is achieved
   leftDriveMotor.stop();
   rightDriveMotor.stop();
 }
 
 
-const int MAX_SPEED = 100;
-const int MIN_SPEED = 10;
-const float Kp_DRIVE = 2;
-const float Kp_ROTATE = 2;
-
 void Path() {
-
-  // roller.setMaxTorque(100, percent);
-  // roller.setVelocity(100, percent);
-  // roller.spin(forward);
+  roller.setMaxTorque(100, percent);
+  roller.setVelocity(100, percent);
+  roller.spin(forward);
 
 
   // PDrive(Kp_DRIVE, 0, 2500, MAX_SPEED);
